@@ -27,30 +27,172 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+  var liked = <WordPair>[];
+
+  var icon = Icons.favorite_border;
+
 
   void getNext() {
     current = WordPair.random();
     notifyListeners();
   }
+
+  void like(){
+    if (liked.contains(current)) {
+      liked.remove(current);
+    } else {
+      liked.add(current);
+    }
+    notifyListeners();
+  }
+  
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+
+  var selectedIndex = 0; 
+
+  @override
+  Widget build(BuildContext context) {
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = AdorePage();
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scaffold(
+          body: Row(
+            children: [
+              SafeArea(
+                child: NavigationRail(
+                  extended: constraints.maxWidth >= 600,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home),
+                      label: Text('Home sweet home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.favorite),
+                      label: Text('Adorés'),
+                    ),
+                  ],
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: page,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+}
+
+class AdorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    var randommot = appState.current;
 
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            RandomCard(randommot: randommot),
-            SizedBox(height: 20),
-            RandomButton(appState: appState)
-          ],
+    if (appState.liked.isEmpty) {
+      return Center(
+        child: Text('Aucun mot adoré'),
+      );
+    }
+
+    return Center(
+      child: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text('Vous avez ${appState.liked.length} mots adorés :', style: Theme.of(context).textTheme.titleLarge)
+          ),
+          for (var randommot in appState.liked)
+            ListTile(
+              leading: Icon(Icons.favorite),
+              title: Text(randommot.asLowerCase),
+            ),
+          
+        ],
+      ),
+    );
+  }
+}
+
+
+class GeneratorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    var pair = appState.current;
+
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          RandomCard(randommot: pair),
+          SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LikeButton(appState: appState),
+              SizedBox(width: 10),
+              RandomButton(appState: appState)
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LikeButton extends StatelessWidget {
+  const LikeButton({
+    super.key,
+    required this.appState,
+  });
+
+  final MyAppState appState;
+  
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    IconData icon = appState.liked.contains(appState.current) ? Icons.favorite : Icons.favorite_border;
+
+    return ElevatedButton.icon(onPressed: ()  {
+      appState.like();
+    }, icon: Icon(icon) ,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.onPrimary,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
         ),
       ),
+      label: Text('Like'),
     );
   }
 }
@@ -81,6 +223,8 @@ class RandomButton extends StatelessWidget {
     );
   }
 }
+
+
 
 class RandomCard extends StatelessWidget {
   const RandomCard({

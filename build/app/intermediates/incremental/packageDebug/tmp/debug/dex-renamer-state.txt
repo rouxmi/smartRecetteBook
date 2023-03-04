@@ -1,4 +1,0 @@
-#Fri Mar 03 17:39:53 WET 2023
-base.0=/home/rouxmi/Documents/projet/smartrecettebook/build/app/intermediates/dex/debug/mergeDexDebug/classes.dex
-renamed.0=classes.dex
-path.0=classes.dex
